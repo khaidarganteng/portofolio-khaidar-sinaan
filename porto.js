@@ -1,707 +1,1206 @@
-const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// ============================================================
+// KHAIDAR SINAAN PORTFOLIO - PORTO.JS
+// ============================================================
 
-// =====================================================
-// CLICK SOUND
-// =====================================================
-const clickSound = document.getElementById('clickSound');
-let soundEnabled = true;
+(() => {
+    'use strict';
 
-try {
-    const saved = localStorage.getItem('khaidar-sound-enabled');
-    if (saved !== null) {
-        soundEnabled = saved === 'true';
+    // ========================================================
+    // BASIC SETTINGS
+    // ========================================================
+
+    const reduceMotion = window.matchMedia(
+        '(prefers-reduced-motion: reduce)'
+    ).matches;
+
+
+    // ========================================================
+    // CLICK SOUND
+    // ========================================================
+
+    const clickSound = document.getElementById('clickSound');
+
+    let soundEnabled = true;
+
+    try {
+        const savedSound =
+            localStorage.getItem('khaidar-sound-enabled');
+
+        if (savedSound !== null) {
+            soundEnabled = savedSound === 'true';
+        }
+    } catch (error) {
+        // localStorage tidak tersedia
     }
-} catch (err) {
-    // localStorage unavailable
-}
-
-function playClickSound() {
-    if (!clickSound || !soundEnabled) return;
-
-    clickSound.currentTime = 0;
-    clickSound.play().catch(() => {});
-}
-
-// Semua tombol dan link tombol mendapatkan suara klik
-document.querySelectorAll('button, a.btn').forEach(el => {
-    if (el.id === 'soundToggleBtn') return;
-
-    el.addEventListener('click', playClickSound);
-});
 
 
-// =====================================================
-// SOUND TOGGLE
-// =====================================================
-const soundToggleBtn = document.getElementById('soundToggleBtn');
+    function playClickSound() {
 
-function updateSoundToggleUI() {
-    if (!soundToggleBtn) return;
+        if (!clickSound) return;
 
-    soundToggleBtn.classList.toggle('is-muted', !soundEnabled);
-
-    soundToggleBtn.setAttribute(
-        'aria-pressed',
-        soundEnabled
-    );
-
-    soundToggleBtn.setAttribute(
-        'aria-label',
-        soundEnabled
-            ? 'Matikan suara klik'
-            : 'Aktifkan suara klik'
-    );
-}
-
-if (soundToggleBtn) {
-    updateSoundToggleUI();
-
-    soundToggleBtn.addEventListener('click', () => {
-        soundEnabled = !soundEnabled;
-
-        updateSoundToggleUI();
+        if (!soundEnabled) return;
 
         try {
-            localStorage.setItem(
-                'khaidar-sound-enabled',
-                soundEnabled
-            );
-        } catch (err) {
-            // Ignore storage errors
-        }
 
-        if (soundEnabled) {
-            playClickSound();
-        }
-    });
-}
+            clickSound.currentTime = 0;
 
+            const playPromise =
+                clickSound.play();
 
-// =====================================================
-// SPOTLIGHT EFFECT
-// =====================================================
-document.querySelectorAll('.skill, .proj-card').forEach(card => {
+            if (playPromise !== undefined) {
 
-    card.addEventListener('mousemove', (e) => {
-
-        const rect = card.getBoundingClientRect();
-
-        card.style.setProperty(
-            '--mx',
-            ((e.clientX - rect.left) / rect.width * 100) + '%'
-        );
-
-        card.style.setProperty(
-            '--my',
-            ((e.clientY - rect.top) / rect.height * 100) + '%'
-        );
-
-    });
-
-});
-
-
-// =====================================================
-// SCROLL REVEAL
-// =====================================================
-const revealEls = document.querySelectorAll(
-    '.reveal, .skill'
-);
-
-const io = new IntersectionObserver(
-    (entries) => {
-
-        entries.forEach(e => {
-
-            if (e.isIntersecting) {
-
-                e.target.classList.add('is-visible');
-
-                io.unobserve(e.target);
+                playPromise.catch(() => {
+                    // Browser dapat memblokir audio
+                });
 
             }
 
-        });
-
-    },
-    {
-        threshold: 0.18
-    }
-);
-
-revealEls.forEach(el => io.observe(el));
-
-
-// =====================================================
-// DOMAIN EXPANSION
-// =====================================================
-const domainBtn = document.getElementById('domainBtn');
-const contactPanel = document.getElementById('contactPanel');
-
-if (domainBtn && contactPanel) {
-
-    domainBtn.addEventListener('click', (e) => {
-
-        const open =
-            contactPanel.classList.toggle('open');
-
-        domainBtn.setAttribute(
-            'aria-expanded',
-            open
-        );
-
-        domainBtn.textContent =
-            open
-                ? 'Close Domain'
-                : 'Activate Domain Expansion';
-
-        spawnRipple(domainBtn, e);
-
-        if (open) {
-
-            contactPanel.scrollIntoView({
-                behavior: reduceMotion
-                    ? 'auto'
-                    : 'smooth',
-                block: 'nearest'
-            });
-
+        } catch (error) {
+            // Abaikan error audio
         }
 
-    });
-
-}
+    }
 
 
-// =====================================================
-// RIPPLE EFFECT
-// =====================================================
-function spawnRipple(btn, e) {
+    // ========================================================
+    // SOUND ON / OFF BUTTON
+    // ========================================================
 
-    if (!btn) return;
-
-    const rect = btn.getBoundingClientRect();
-
-    const ripple = document.createElement('span');
-
-    ripple.className = 'ripple';
-
-    const size =
-        Math.max(rect.width, rect.height) * 1.4;
-
-    ripple.style.width = size + 'px';
-    ripple.style.height = size + 'px';
-
-    const x =
-        (e && e.clientX
-            ? e.clientX - rect.left
-            : rect.width / 2) -
-        size / 2;
-
-    const y =
-        (e && e.clientY
-            ? e.clientY - rect.top
-            : rect.height / 2) -
-        size / 2;
-
-    ripple.style.left = x + 'px';
-    ripple.style.top = y + 'px';
-
-    btn.appendChild(ripple);
-
-    ripple.addEventListener(
-        'animationend',
-        () => ripple.remove()
-    );
-}
+    let soundToggleBtn =
+        document.getElementById('soundToggleBtn');
 
 
-// =====================================================
-// MOBILE NAVIGATION
-// =====================================================
-const navToggle =
-    document.getElementById('navToggle');
+    // Kalau tombol belum ada di HTML,
+    // JS akan membuat tombolnya otomatis.
+    if (!soundToggleBtn) {
 
-const navLinks =
-    document.getElementById('navLinks');
+        soundToggleBtn =
+            document.createElement('button');
 
-if (navToggle && navLinks) {
+        soundToggleBtn.id =
+            'soundToggleBtn';
 
-    navToggle.addEventListener('click', () => {
+        soundToggleBtn.type =
+            'button';
 
-        const open =
-            navLinks.classList.toggle('is-open');
+        soundToggleBtn.className =
+            'sound-toggle';
 
-        navToggle.classList.toggle(
-            'is-open',
-            open
+        soundToggleBtn.innerHTML =
+            '<span class="sound-icon">🔊</span>';
+
+        soundToggleBtn.setAttribute(
+            'aria-label',
+            'Matikan suara klik'
         );
 
-        navToggle.setAttribute(
-            'aria-expanded',
-            open
+        soundToggleBtn.setAttribute(
+            'aria-pressed',
+            'true'
         );
 
-    });
+        soundToggleBtn.title =
+            'On / Off suara klik';
 
-    // Tutup menu setelah link dipilih
-    navLinks.querySelectorAll('a').forEach(a => {
+        document.body.appendChild(
+            soundToggleBtn
+        );
 
-        a.addEventListener('click', () => {
+    }
 
-            navLinks.classList.remove(
-                'is-open'
+
+    function updateSoundButton() {
+
+        if (!soundToggleBtn) return;
+
+        const icon =
+            soundToggleBtn.querySelector(
+                '.sound-icon'
             );
 
-            navToggle.classList.remove(
-                'is-open'
+
+        if (soundEnabled) {
+
+            if (icon) {
+                icon.textContent = '🔊';
+            }
+
+            soundToggleBtn.setAttribute(
+                'aria-label',
+                'Matikan suara klik'
             );
 
-            navToggle.setAttribute(
-                'aria-expanded',
+            soundToggleBtn.setAttribute(
+                'aria-pressed',
+                'true'
+            );
+
+            soundToggleBtn.classList.remove(
+                'is-muted'
+            );
+
+        } else {
+
+            if (icon) {
+                icon.textContent = '🔇';
+            }
+
+            soundToggleBtn.setAttribute(
+                'aria-label',
+                'Aktifkan suara klik'
+            );
+
+            soundToggleBtn.setAttribute(
+                'aria-pressed',
                 'false'
             );
 
-        });
+            soundToggleBtn.classList.add(
+                'is-muted'
+            );
 
-    });
-
-}
-
-
-// =====================================================
-// SCROLL PROGRESS + BACK TO TOP
-// =====================================================
-const curseFill =
-    document.getElementById('curseFill');
-
-const toTopBtn =
-    document.getElementById('toTopBtn');
-
-function onScroll() {
-
-    const scrollTop = window.scrollY;
-
-    const docHeight =
-        document.body.scrollHeight -
-        window.innerHeight;
-
-    const pct =
-        docHeight > 0
-            ? (scrollTop / docHeight) * 100
-            : 0;
-
-    if (curseFill) {
-        curseFill.style.width =
-            pct + '%';
-    }
-
-    if (toTopBtn) {
-
-        toTopBtn.classList.toggle(
-            'is-visible',
-            scrollTop > 500
-        );
+        }
 
     }
 
-}
 
-window.addEventListener(
-    'scroll',
-    onScroll,
-    {
-        passive: true
-    }
-);
-
-onScroll();
+    updateSoundButton();
 
 
-// =====================================================
-// BACK TO TOP
-// =====================================================
-if (toTopBtn) {
-
-    toTopBtn.addEventListener(
+    soundToggleBtn.addEventListener(
         'click',
-        () => {
+        function () {
 
-            window.scrollTo({
-                top: 0,
-                behavior: reduceMotion
-                    ? 'auto'
-                    : 'smooth'
-            });
+            soundEnabled =
+                !soundEnabled;
+
+
+            updateSoundButton();
+
+
+            try {
+
+                localStorage.setItem(
+                    'khaidar-sound-enabled',
+                    String(soundEnabled)
+                );
+
+            } catch (error) {
+                // Abaikan error storage
+            }
+
+
+            // Kalau baru dinyalakan,
+            // langsung tes suara.
+            if (soundEnabled) {
+
+                playClickSound();
+
+            }
 
         }
     );
 
-}
+
+    // ========================================================
+    // BUTTON / LINK CLICK SOUND
+    // ========================================================
+
+    document
+        .querySelectorAll(
+            'button:not(#soundToggleBtn), a.btn'
+        )
+        .forEach(function (element) {
+
+            element.addEventListener(
+                'click',
+                function () {
+
+                    playClickSound();
+
+                }
+            );
+
+        });
 
 
-// =====================================================
-// CURSED ENERGY PARTICLES
-// =====================================================
-const canvas =
-    document.getElementById('curse-canvas');
-
-if (canvas) {
-
-    const ctx =
-        canvas.getContext('2d');
-
-    let w;
-    let h;
-
-    let particles = [];
-
-    let mouseX = -9999;
-    let mouseY = -9999;
+    // ========================================================
+    // IMPORTANT:
+    // INSTAGRAM / WHATSAPP / EMAIL
+    // ========================================================
+    //
+    // JS TIDAK MENGUBAH href link.
+    // Jadi tombol Instagram tetap aman.
+    //
+    // Contoh HTML:
+    //
+    // <a href="https://instagram.com/username">
+    // Instagram
+    // </a>
+    //
+    // JS hanya memberi suara ketika tombol diklik.
 
 
-    // -------------------------------------------------
-    // RESIZE CANVAS
-    // -------------------------------------------------
-    function resize() {
+    // ========================================================
+    // SPOTLIGHT CARD EFFECT
+    // ========================================================
 
-        w =
-            canvas.width =
-            window.innerWidth;
+    const cards =
+        document.querySelectorAll(
+            '.skill, .proj-card'
+        );
 
-        h =
-            canvas.height =
-            document.body.scrollHeight;
+
+    cards.forEach(function (card) {
+
+        card.addEventListener(
+            'mousemove',
+            function (event) {
+
+                const rect =
+                    card.getBoundingClientRect();
+
+
+                const x =
+                    ((event.clientX - rect.left)
+                        / rect.width) * 100;
+
+
+                const y =
+                    ((event.clientY - rect.top)
+                        / rect.height) * 100;
+
+
+                card.style.setProperty(
+                    '--mx',
+                    x + '%'
+                );
+
+
+                card.style.setProperty(
+                    '--my',
+                    y + '%'
+                );
+
+            }
+        );
+
+    });
+
+
+    // ========================================================
+    // SCROLL REVEAL
+    // ========================================================
+
+    const revealElements =
+        document.querySelectorAll(
+            '.reveal, .skill'
+        );
+
+
+    if (
+        'IntersectionObserver' in window
+    ) {
+
+        const revealObserver =
+            new IntersectionObserver(
+                function (entries) {
+
+                    entries.forEach(
+                        function (entry) {
+
+                            if (
+                                entry.isIntersecting
+                            ) {
+
+                                entry.target.classList.add(
+                                    'is-visible'
+                                );
+
+
+                                revealObserver.unobserve(
+                                    entry.target
+                                );
+
+                            }
+
+                        }
+                    );
+
+                },
+                {
+                    threshold: 0.18
+                }
+            );
+
+
+        revealElements.forEach(
+            function (element) {
+
+                revealObserver.observe(
+                    element
+                );
+
+            }
+        );
+
+    } else {
+
+        revealElements.forEach(
+            function (element) {
+
+                element.classList.add(
+                    'is-visible'
+                );
+
+            }
+        );
 
     }
 
+
+    // ========================================================
+    // DOMAIN EXPANSION
+    // ========================================================
+
+    const domainBtn =
+        document.getElementById(
+            'domainBtn'
+        );
+
+
+    const contactPanel =
+        document.getElementById(
+            'contactPanel'
+        );
+
+
+    if (
+        domainBtn &&
+        contactPanel
+    ) {
+
+        domainBtn.addEventListener(
+            'click',
+            function (event) {
+
+                const isOpen =
+                    contactPanel.classList.toggle(
+                        'open'
+                    );
+
+
+                domainBtn.setAttribute(
+                    'aria-expanded',
+                    String(isOpen)
+                );
+
+
+                if (isOpen) {
+
+                    domainBtn.textContent =
+                        'Close Domain';
+
+                } else {
+
+                    domainBtn.textContent =
+                        'Activate Domain Expansion';
+
+                }
+
+
+                createRipple(
+                    domainBtn,
+                    event
+                );
+
+
+                if (isOpen) {
+
+                    contactPanel.scrollIntoView({
+
+                        behavior:
+                            reduceMotion
+                                ? 'auto'
+                                : 'smooth',
+
+                        block: 'nearest'
+
+                    });
+
+                }
+
+            }
+        );
+
+    }
+
+
+    // ========================================================
+    // RIPPLE EFFECT
+    // ========================================================
+
+    function createRipple(
+        button,
+        event
+    ) {
+
+        if (!button) return;
+
+
+        const rect =
+            button.getBoundingClientRect();
+
+
+        const ripple =
+            document.createElement(
+                'span'
+            );
+
+
+        ripple.className =
+            'ripple';
+
+
+        const size =
+            Math.max(
+                rect.width,
+                rect.height
+            ) * 1.4;
+
+
+        ripple.style.width =
+            size + 'px';
+
+
+        ripple.style.height =
+            size + 'px';
+
+
+        let x =
+            rect.width / 2;
+
+
+        let y =
+            rect.height / 2;
+
+
+        if (event) {
+
+            x =
+                event.clientX -
+                rect.left;
+
+            y =
+                event.clientY -
+                rect.top;
+
+        }
+
+
+        ripple.style.left =
+            (x - size / 2) + 'px';
+
+
+        ripple.style.top =
+            (y - size / 2) + 'px';
+
+
+        button.appendChild(
+            ripple
+        );
+
+
+        ripple.addEventListener(
+            'animationend',
+            function () {
+
+                ripple.remove();
+
+            }
+        );
+
+    }
+
+
+    // ========================================================
+    // MOBILE NAVIGATION
+    // ========================================================
+
+    const navToggle =
+        document.getElementById(
+            'navToggle'
+        );
+
+
+    const navLinks =
+        document.getElementById(
+            'navLinks'
+        );
+
+
+    if (
+        navToggle &&
+        navLinks
+    ) {
+
+        navToggle.addEventListener(
+            'click',
+            function () {
+
+                const isOpen =
+                    navLinks.classList.toggle(
+                        'is-open'
+                    );
+
+
+                navToggle.classList.toggle(
+                    'is-open',
+                    isOpen
+                );
+
+
+                navToggle.setAttribute(
+                    'aria-expanded',
+                    String(isOpen)
+                );
+
+            }
+        );
+
+
+        // Tutup menu setelah memilih link
+        navLinks
+            .querySelectorAll('a')
+            .forEach(function (link) {
+
+                link.addEventListener(
+                    'click',
+                    function () {
+
+                        navLinks.classList.remove(
+                            'is-open'
+                        );
+
+
+                        navToggle.classList.remove(
+                            'is-open'
+                        );
+
+
+                        navToggle.setAttribute(
+                            'aria-expanded',
+                            'false'
+                        );
+
+                    }
+                );
+
+            });
+
+    }
+
+
+    // ========================================================
+    // SCROLL PROGRESS
+    // ========================================================
+
+    const curseFill =
+        document.getElementById(
+            'curseFill'
+        );
+
+
+    const toTopBtn =
+        document.getElementById(
+            'toTopBtn'
+        );
+
+
+    function updateScroll() {
+
+        const scrollTop =
+            window.scrollY;
+
+
+        const documentHeight =
+            document.body.scrollHeight;
+
+
+        const windowHeight =
+            window.innerHeight;
+
+
+        const maxScroll =
+            documentHeight -
+            windowHeight;
+
+
+        let percentage = 0;
+
+
+        if (maxScroll > 0) {
+
+            percentage =
+                (scrollTop / maxScroll) *
+                100;
+
+        }
+
+
+        if (curseFill) {
+
+            curseFill.style.width =
+                percentage + '%';
+
+        }
+
+
+        if (toTopBtn) {
+
+            toTopBtn.classList.toggle(
+                'is-visible',
+                scrollTop > 500
+            );
+
+        }
+
+    }
+
+
     window.addEventListener(
-        'resize',
-        resize
-    );
-
-    resize();
-
-
-    // -------------------------------------------------
-    // MOUSE
-    // -------------------------------------------------
-    window.addEventListener(
-        'mousemove',
-        (e) => {
-
-            mouseX = e.clientX;
-
-            mouseY =
-                e.clientY +
-                window.scrollY;
-
-        },
+        'scroll',
+        updateScroll,
         {
             passive: true
         }
     );
 
 
-    window.addEventListener(
-        'mouseleave',
-        () => {
+    updateScroll();
 
-            mouseX = -9999;
-            mouseY = -9999;
+
+    // ========================================================
+    // BACK TO TOP
+    // ========================================================
+
+    if (toTopBtn) {
+
+        toTopBtn.addEventListener(
+            'click',
+            function () {
+
+                window.scrollTo({
+
+                    top: 0,
+
+                    behavior:
+                        reduceMotion
+                            ? 'auto'
+                            : 'smooth'
+
+                });
+
+            }
+        );
+
+    }
+
+
+    // ========================================================
+    // CURSED ENERGY PARTICLES
+    // ========================================================
+
+    const canvas =
+        document.getElementById(
+            'curse-canvas'
+        );
+
+
+    if (canvas) {
+
+        const ctx =
+            canvas.getContext('2d');
+
+
+        let canvasWidth = 0;
+
+        let canvasHeight = 0;
+
+
+        let particles = [];
+
+
+        let mouseX = -9999;
+
+        let mouseY = -9999;
+
+
+        // ----------------------------------------------------
+        // RESIZE
+        // ----------------------------------------------------
+
+        function resizeCanvas() {
+
+            canvasWidth =
+                canvas.width =
+                window.innerWidth;
+
+
+            canvasHeight =
+                canvas.height =
+                document.body.scrollHeight;
 
         }
-    );
 
 
-    // -------------------------------------------------
-    // CREATE PARTICLE
-    // -------------------------------------------------
-    function makeParticle() {
-
-        return {
-
-            x: Math.random() * w,
-
-            y: Math.random() * h,
-
-            r:
-                Math.random() * 1.6 +
-                0.4,
-
-            vy:
-                -(Math.random() * 0.25 + 0.05),
-
-            vx:
-                (Math.random() - 0.5) *
-                0.15,
-
-            a:
-                Math.random() * 0.5 +
-                0.1,
-
-            hue:
-                Math.random() > 0.75
-                    ? '226,58,94'
-                    : '139,107,255'
-
-        };
-
-    }
+        resizeCanvas();
 
 
-    // -------------------------------------------------
-    // PARTICLE COUNT
-    // -------------------------------------------------
-    const COUNT =
-        reduceMotion
-            ? 0
-            : window.innerWidth <= 640
-                ? 55
-                : 110;
-
-
-    for (
-        let i = 0;
-        i < COUNT;
-        i++
-    ) {
-
-        particles.push(
-            makeParticle()
-        );
-
-    }
-
-
-    // -------------------------------------------------
-    // ANIMATION
-    // -------------------------------------------------
-    function tick() {
-
-        ctx.clearRect(
-            0,
-            0,
-            w,
-            h
+        window.addEventListener(
+            'resize',
+            resizeCanvas
         );
 
 
-        // Constellation lines
-        const linkDist = 120;
+        // ----------------------------------------------------
+        // MOUSE
+        // ----------------------------------------------------
+
+        window.addEventListener(
+            'mousemove',
+            function (event) {
+
+                mouseX =
+                    event.clientX;
+
+
+                mouseY =
+                    event.clientY +
+                    window.scrollY;
+
+            },
+            {
+                passive: true
+            }
+        );
+
+
+        window.addEventListener(
+            'mouseleave',
+            function () {
+
+                mouseX = -9999;
+
+                mouseY = -9999;
+
+            }
+        );
+
+
+        // ----------------------------------------------------
+        // CREATE PARTICLE
+        // ----------------------------------------------------
+
+        function createParticle() {
+
+            return {
+
+                x:
+                    Math.random() *
+                    canvasWidth,
+
+
+                y:
+                    Math.random() *
+                    canvasHeight,
+
+
+                radius:
+                    Math.random() *
+                    1.6 +
+                    0.4,
+
+
+                vx:
+                    (Math.random() - 0.5) *
+                    0.15,
+
+
+                vy:
+                    -(Math.random() * 0.25 + 0.05),
+
+
+                opacity:
+                    Math.random() *
+                    0.5 +
+                    0.1,
+
+
+                hue:
+                    Math.random() > 0.75
+                        ? '226,58,94'
+                        : '139,107,255'
+
+            };
+
+        }
+
+
+        // ----------------------------------------------------
+        // PARTICLE COUNT
+        // ----------------------------------------------------
+
+        let particleCount;
+
+
+        if (reduceMotion) {
+
+            particleCount = 0;
+
+        } else if (
+            window.innerWidth <= 640
+        ) {
+
+            // Lebih ringan untuk HP
+            particleCount = 55;
+
+        } else {
+
+            particleCount = 110;
+
+        }
 
 
         for (
             let i = 0;
-            i < particles.length;
+            i < particleCount;
             i++
         ) {
 
-            const a = particles[i];
+            particles.push(
+                createParticle()
+            );
 
-            if (a.fade) continue;
+        }
 
+
+        // ----------------------------------------------------
+        // ANIMATION
+        // ----------------------------------------------------
+
+        function animateParticles() {
+
+            ctx.clearRect(
+                0,
+                0,
+                canvasWidth,
+                canvasHeight
+            );
+
+
+            const linkDistance = 120;
+
+
+            // ------------------------------------------------
+            // CONNECTION LINES
+            // ------------------------------------------------
 
             for (
-                let j = i + 1;
-                j < particles.length;
-                j++
+                let i = 0;
+                i < particles.length;
+                i++
             ) {
 
-                const b = particles[j];
-
-                if (b.fade) continue;
-
-
-                const dx =
-                    a.x - b.x;
-
-                const dy =
-                    a.y - b.y;
-
-                const d2 =
-                    dx * dx +
-                    dy * dy;
+                const first =
+                    particles[i];
 
 
-                if (
-                    d2 <
-                    linkDist * linkDist
+                for (
+                    let j = i + 1;
+                    j < particles.length;
+                    j++
                 ) {
 
-                    const alpha =
+                    const second =
+                        particles[j];
+
+
+                    const dx =
+                        first.x -
+                        second.x;
+
+
+                    const dy =
+                        first.y -
+                        second.y;
+
+
+                    const distanceSquared =
+                        dx * dx +
+                        dy * dy;
+
+
+                    if (
+                        distanceSquared <
+                        linkDistance *
+                        linkDistance
+                    ) {
+
+                        const distance =
+                            Math.sqrt(
+                                distanceSquared
+                            );
+
+
+                        const opacity =
+                            (
+                                1 -
+                                distance /
+                                linkDistance
+                            ) * 0.16;
+
+
+                        ctx.strokeStyle =
+                            `rgba(139,107,255,${opacity})`;
+
+
+                        ctx.lineWidth = 1;
+
+
+                        ctx.beginPath();
+
+
+                        ctx.moveTo(
+                            first.x,
+                            first.y
+                        );
+
+
+                        ctx.lineTo(
+                            second.x,
+                            second.y
+                        );
+
+
+                        ctx.stroke();
+
+                    }
+
+                }
+
+            }
+
+
+            // ------------------------------------------------
+            // PARTICLES
+            // ------------------------------------------------
+
+            particles.forEach(
+                function (particle) {
+
+                    // Mouse interaction
+
+                    const dx =
+                        particle.x -
+                        mouseX;
+
+
+                    const dy =
                         (
-                            1 -
-                            Math.sqrt(d2) /
-                            linkDist
-                        ) * 0.16;
+                            particle.y -
+                            window.scrollY
+                        ) -
+                        (
+                            mouseY -
+                            window.scrollY
+                        );
 
 
-                    ctx.strokeStyle =
-                        `rgba(139,107,255,${alpha})`;
+                    const distanceSquared =
+                        dx * dx +
+                        dy * dy;
 
-                    ctx.lineWidth = 1;
+
+                    const interactionRadius =
+                        90;
+
+
+                    if (
+                        distanceSquared <
+                        interactionRadius *
+                        interactionRadius &&
+                        distanceSquared >
+                        0.01
+                    ) {
+
+                        const distance =
+                            Math.sqrt(
+                                distanceSquared
+                            );
+
+
+                        const force =
+                            0.35 *
+                            (
+                                1 -
+                                distance /
+                                interactionRadius
+                            );
+
+
+                        particle.vx +=
+                            (
+                                dx /
+                                distance
+                            ) *
+                            force *
+                            0.12;
+
+
+                        particle.vy +=
+                            (
+                                dy /
+                                distance
+                            ) *
+                            force *
+                            0.12;
+
+                    }
+
+
+                    // Movement
+
+                    particle.x +=
+                        particle.vx;
+
+
+                    particle.y +=
+                        particle.vy;
+
+
+                    particle.vx *=
+                        0.96;
+
+
+                    particle.vy *=
+                        0.96;
+
+
+                    // Vertical wrap
+
+                    if (
+                        particle.y <
+                        -10
+                    ) {
+
+                        particle.y =
+                            canvasHeight +
+                            10;
+
+
+                        particle.x =
+                            Math.random() *
+                            canvasWidth;
+
+                    }
+
+
+                    if (
+                        particle.y >
+                        canvasHeight +
+                        10
+                    ) {
+
+                        particle.y = -10;
+
+
+                        particle.x =
+                            Math.random() *
+                            canvasWidth;
+
+                    }
+
+
+                    // Horizontal wrap
+
+                    if (
+                        particle.x <
+                        -10
+                    ) {
+
+                        particle.x =
+                            canvasWidth +
+                            10;
+
+                    }
+
+
+                    if (
+                        particle.x >
+                        canvasWidth +
+                        10
+                    ) {
+
+                        particle.x = -10;
+
+                    }
+
+
+                    // Draw
 
                     ctx.beginPath();
 
-                    ctx.moveTo(
-                        a.x,
-                        a.y
+
+                    ctx.arc(
+
+                        particle.x,
+
+                        particle.y,
+
+                        particle.radius,
+
+                        0,
+
+                        Math.PI * 2
+
                     );
 
-                    ctx.lineTo(
-                        b.x,
-                        b.y
-                    );
 
-                    ctx.stroke();
-
-                }
-
-            }
-
-        }
+                    ctx.fillStyle =
+                        `rgba(${particle.hue},${particle.opacity})`;
 
 
-        // Update particles
-        for (
-            let i = particles.length - 1;
-            i >= 0;
-            i--
-        ) {
-
-            const p = particles[i];
+                    ctx.shadowBlur = 6;
 
 
-            // Mouse repulsion
-            const dx =
-                p.x - mouseX;
-
-            const dy =
-                (p.y - window.scrollY) -
-                (mouseY - window.scrollY);
-
-            const distSq =
-                dx * dx +
-                dy * dy;
-
-            const radius = 90;
+                    ctx.shadowColor =
+                        `rgba(${particle.hue},0.6)`;
 
 
-            if (
-                distSq <
-                radius * radius &&
-                distSq > 0.01
-            ) {
-
-                const dist =
-                    Math.sqrt(distSq);
-
-                const force =
-                    0.35 *
-                    (1 - dist / radius);
-
-                p.vx +=
-                    (dx / dist) *
-                    force *
-                    0.12;
-
-                p.vy +=
-                    (dy / dist) *
-                    force *
-                    0.12;
-
-            }
-
-
-            p.x += p.vx;
-            p.y += p.vy;
-
-            p.vx *= 0.96;
-            p.vy *= 0.96;
-
-
-            // Fade
-            if (p.fade) {
-
-                p.a -= 0.02;
-
-                if (p.a <= 0) {
-
-                    particles.splice(
-                        i,
-                        1
-                    );
-
-                    continue;
+                    ctx.fill();
 
                 }
-
-            } else {
-
-                // Vertical wrapping
-                if (p.y < -10) {
-
-                    p.y = h + 10;
-
-                    p.x =
-                        Math.random() * w;
-
-                }
-
-                if (p.y > h + 10) {
-
-                    p.y = -10;
-
-                    p.x =
-                        Math.random() * w;
-
-                }
-
-
-                // Horizontal wrapping
-                if (p.x < -10) {
-                    p.x = w + 10;
-                }
-
-                if (p.x > w + 10) {
-                    p.x = -10;
-                }
-
-            }
-
-
-            // Draw particle
-            ctx.beginPath();
-
-            ctx.arc(
-                p.x,
-                p.y,
-                p.r,
-                0,
-                Math.PI * 2
             );
 
-            ctx.fillStyle =
-                `rgba(${p.hue},${p.a})`;
 
-            ctx.shadowBlur = 6;
+            ctx.shadowBlur = 0;
 
-            ctx.shadowColor =
-                `rgba(${p.hue},0.6)`;
 
-            ctx.fill();
+            if (!reduceMotion) {
+
+                requestAnimationFrame(
+                    animateParticles
+                );
+
+            }
 
         }
 
 
-        if (!reduceMotion) {
-            requestAnimationFrame(tick);
-        }
+        animateParticles();
 
     }
 
 
-    tick();
-
-}
+})();
